@@ -2,7 +2,6 @@ import discord
 import os
 import random
 import asyncio
-import time
 from dotenv import load_dotenv
 from datetime import datetime, date
 import threading
@@ -21,17 +20,6 @@ client = discord.Bot(intents=intents)
 
 # dictionary of users with birthdays registered in the discord server
 birthday_dict = {}
-
-# Sample data for testing so no need to re add birthdays each time
-#birthday_dict = {
-#    '1234567890': {'username': 'CSL', 'birth_date': date(1990, 10, 20)},
-#    '0987654321': {'username': 'EL', 'birth_date': date(1992, 6, 30)},
-#    '1122334455': {'username': 'OL', 'birth_date': date(2020, 11, 21)},
-#    '135841744834134016': {'username': 'ME', 'birth_date': date(1994, 11, 12)},
-#    '1146574836378902598': {'username': 'ME', 'birth_date': date(2005, 11, 12)},
-#    '1146389244865167452': {'username': 'SB', 'birth_date': date(2023, 11, 12)}
-#}
-# END OF SAMPLE DATA
 
 birthday_check = False
 # creating a list to store if it is someone's birthday today
