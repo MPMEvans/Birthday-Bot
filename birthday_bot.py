@@ -174,7 +174,7 @@ async def birthday_gif():
     global birthday_dict
 
     # manually setting the channel that the bot will send the message in. The number is the channel id which can be obtained by right clicking on the desired channel and selecting "Copy Channel ID"
-    channel = client.get_channel(441689002140237836)
+    channel = client.get_channel(52826317834)
     birthday_gif = get_random_birthday_gif()
     print(birthday_gif)
 
