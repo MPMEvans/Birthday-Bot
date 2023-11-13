@@ -157,7 +157,7 @@ def checkTime():
                 birth_today_list.append(k)
         print(birth_today_list)
 
-        # checking if it is someone's birthday and allowing a separate function to post a gif because asyncio is a dick
+        # checking if it is someone's birthday and allowing a separate function to post a gif
         if len(birth_today_list) > 0:
             birthday_check = True
 
@@ -210,7 +210,7 @@ def get_random_birthday_gif():
     # setting the search limit to eight gifs
     lmt = 8
     
-    # our test search
+    # our search term
     search_term = "birthday"
 
     # get random results using default locale of EN_US
