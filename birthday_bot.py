@@ -294,6 +294,17 @@ async def birthday_delete(message):
     del birthday_dict[f'{username}']
     await message.channel.send(f'Congratulations <@{username}>, you have been deleted!')
 
+    # creating a deep copy of the original dictionary so it remains unchanged
+    birthday_dict_copy = copy.deepcopy(birthday_dict)
+        
+    for k, v in birthday_dict_copy.items():
+        v['birth_date'] = v['birth_date'].strftime('%Y, %m, %d')
+
+    # writing the dictionary to a JSON file
+    my_json_path = os.path.join(os.path.dirname(__file__), "birthday_dict.json")
+    with open(my_json_path, "w") as outfile:
+        json.dump(birthday_dict_copy, outfile)
+
 async def commands(message):
     # function that allows the user to see what commands are available for the bot to perform.
     username = message.author.id
