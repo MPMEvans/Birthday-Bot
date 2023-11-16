@@ -1,5 +1,6 @@
 import discord
 import os
+import os.path
 import random
 import asyncio
 from dotenv import load_dotenv
@@ -7,10 +8,12 @@ from datetime import datetime, date
 import threading
 import requests
 import json
+import copy
 
 load_dotenv()
 DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
 TENOR_TOKEN = os.getenv('TENOR_TOKEN')
+CHANNEL_TOKEN = os.getenv('CHANNEL_TOKEN')
 
 intents = discord.Intents.default()
 intents.members = True
@@ -18,12 +21,30 @@ intents.message_content = True
 
 client = discord.Client(intents=intents)
 
-# dictionary of users with birthdays registered in the discord server
-birthday_dict = {}
-
+# setting initial birthday check to false so the bot doesn't accidentally post when it is not someone's birthday
 birthday_check = False
 # creating a list to store if it is someone's birthday today
 birth_today_list = []
+
+# reading JSON file of birthdays if one exists, otherwise a blank dictionary for storing birthdays is created
+path = os.path.join(os.path.dirname(__file__), 'birthday_dict.json')
+file_exists = os.path.isfile(path)
+if file_exists == True:
+    # opening JSON file
+    with open(path, "r") as openfile:
+        # reading from json file
+        birthday_dict = json.load(openfile)
+        print(f"Birthday dict before converting to datetime object is {birthday_dict}")
+
+        # converting the birth date string from the JSON file into a date time object
+        for k, v in birthday_dict.items():
+            birth_date_str = datetime.strptime(v['birth_date'], '%Y, %m, %d')
+            v['birth_date'] = birth_date_str.date()
+        
+        print(f"Birthday dict after converting to datetime object is {birthday_dict}")
+else: 
+    # dictionary of users with birthdays registered in the discord server
+    birthday_dict = {}
 
 @client.event
 async def on_ready():
@@ -35,6 +56,7 @@ async def on_message(message):
     channel = str(message.channel.name)
     user_message = str(message.content)
     
+    # manually creating commands for users to interact with the bot
     if message.author != client.user:
         print(f'Message {user_message} by {username} on {channel} and name is {message.author.name}')
 
@@ -71,14 +93,26 @@ async def birthday_add(message):
         # convert birthday string to datetime object using strptime, guide for formatting codes: https://docs.python.org/3.8/library/datetime.html?highlight=strptime#strftime-and-strptime-format-codes
         birthday = datetime.strptime(birthday_string, '%d/%m/%Y')
         # utilise datetime to separate out parts of the date for storing in user object. Also use .date() to remove time part of datetime object.
-        birthday_user = {'username': username, 'birth_date': birthday.date()}
+        birthday_user = {"username": username, "birth_date": birthday.date()}
         # add users birthday details to birthday dictionary, keyed by the userid incase there are multiple users with the same name on the server.
         birthday_dict[userid] = birthday_user
-        await message.channel.send(f'Thanks, you entered {birthday_string}, this has been added to the birthday bot!')
+        await message.channel.send(f'Thanks <@{userid}>, you entered {birthday_string}, this has been added to the birthday bot!')
+
+        # creating a deep copy of the original dictionary so it remains unchanged
+        birthday_dict_copy = copy.deepcopy(birthday_dict)
+        
+        for k, v in birthday_dict_copy.items():
+            v['birth_date'] = v['birth_date'].strftime('%Y, %m, %d')
+
+        # writing the dictionary to a JSON file
+        my_json_path = os.path.join(os.path.dirname(__file__), "birthday_dict.json")
+        with open(my_json_path, "w") as outfile:
+            json.dump(birthday_dict_copy, outfile)
+
     except:
         await message.channel.send(f'An error occured, are you sure you entered your birthday in the correct format (DD/MM/YYYY)? Please start the process again with !add.')
 
-    print(birthday_dict)
+    
 
 async def birthday_next(message):
     # function to allow a user to ask the bot when the next birthday is
@@ -108,9 +142,11 @@ async def birthday_next(message):
         # first index is the closest to the present date.
         next_birthday = sorted_birthdays[0]['birthday']
         # use datetime strftime to convert datetime object into readable text format of date. Format is the same as used in the birthday add function above with the link in the comment for reference.
-        formatted_birthday_string = datetime.strftime(next_birthday, '%d %B')
-
-        # create list incase muiltiple users have the same next birthday.
+        formatted_birthday_day = next_birthday.strftime('%d')
+        formatted_birthday_month = datetime.strftime(next_birthday, '%B')
+        if '0' in formatted_birthday_day:
+            formatted_birthday_day = formatted_birthday_day[-1]
+        # create list incase multiple users have the same next birthday.
         next_user_birthday = []
         for b in sorted_birthdays:
             if b['birthday'] == next_birthday:
@@ -127,11 +163,27 @@ async def birthday_next(message):
                 user_string = ', '.join(users) + ' all'
             else:
                 user_string = ' and '.join(users) + ' both'
-            output_message = f"The next birthday is a busy one! {user_string} have their birthdays on {formatted_birthday_string}!"
+            #output_message = f"The next birthday is a busy one! {user_string} have their birthdays on {formatted_birthday_string}!"
+            if int(formatted_birthday_day[-1]) == 1 and int(formatted_birthday_day[0]) != 1:
+                output_message = f"The next birthday is a busy one! {user_string} have their birthdays on {formatted_birthday_day}st of {formatted_birthday_month}!"
+            elif int(formatted_birthday_day[-1]) == 2 and int(formatted_birthday_day[0]) != 1:
+                output_message = f"The next birthday is a busy one! {user_string} have their birthdays on {formatted_birthday_day}nd of {formatted_birthday_month}!"
+            elif int(formatted_birthday_day[-1]) == 3 and int(formatted_birthday_day[0]) != 1:
+                output_message = f"The next birthday is a busy one! {user_string} have their birthdays on {formatted_birthday_day}rd of {formatted_birthday_month}!"
+            else:
+                output_message = f"The next birthday is a busy one! {user_string} have their birthdays on {formatted_birthday_day}th of {formatted_birthday_month}!"
         else:
             # return the username of the user from the main birthday dict for outputtings.
             user = birthday_dict[next_user_birthday[0]]['username']
-            output_message = f"The next birthday is {user} on {formatted_birthday_string}!"
+            #output_message = f"The next birthday is {user} on {formatted_birthday_string}!"
+            if int(formatted_birthday_day[-1]) == 1 and int(formatted_birthday_day[0]) != 1:
+                output_message = f"The next birthday is {user} on {formatted_birthday_day}st of {formatted_birthday_month}!"
+            elif int(formatted_birthday_day[-1]) == 2 and int(formatted_birthday_day[0]) != 1:
+                output_message = f"The next birthday is {user} on {formatted_birthday_day}nd of {formatted_birthday_month}!"
+            elif int(formatted_birthday_day[-1]) == 3 and int(formatted_birthday_day[0]) != 1:
+                output_message = f"The next birthday is {user} on {formatted_birthday_day}rd of {formatted_birthday_month}!"
+            else:
+                output_message = f"The next birthday is {user} on {formatted_birthday_day}th of {formatted_birthday_month}!"
         # output single message to the server with birthday details.
         await message.channel.send(output_message)
     else:
@@ -149,7 +201,7 @@ def checkTime():
     current_time = now.strftime("%H:%M:%S")
     print("Current Time =", current_time)
 
-    if (current_time == '07:00:00'):  # check if matches with the desire time
+    if (current_time == '07:00:00'):  # check if matches with the desired time
         # using datetime to get today's date
         today = datetime.today().date()
         # parse year from the datetime date object.
@@ -160,7 +212,6 @@ def checkTime():
             this_year_bday = v['birth_date'].replace(year=curr_year)
             if this_year_bday == today:
                 birth_today_list.append(k)
-        print(birth_today_list)
 
         # checking if it is someone's birthday and allowing a separate function to post a gif because asyncio is a dick
         if len(birth_today_list) > 0:
@@ -178,10 +229,9 @@ async def birthday_gif():
     global birth_today_list
     global birthday_dict
 
-    # manually setting the channel that the bot will send the message in. The number is the channel id which can be obtained by right clicking on the desired channel and selecting "Copy Channel ID"
-    channel = client.get_channel(1234567890)
+    # manually setting the channel that the bot will send the message in. The CHANNEL_TOKEN is the channel id which can be obtained by right clicking on the desired channel and selecting "Copy Channel ID"
+    channel = client.get_channel(int(CHANNEL_TOKEN))
     birthday_gif = get_random_birthday_gif()
-    print(birthday_gif)
 
     # using datetime to get today's date
     today = datetime.today().date()
@@ -191,7 +241,10 @@ async def birthday_gif():
     if len(birth_today_list) == 1:
         birth_year = birthday_dict[birth_today_list[0]]['birth_date']
         age = curr_year - birth_year.year
-        await channel.send(f"It is <@{birth_today_list[0]}>'s birthday today and they are {age} years old! {birthday_gif}")
+        embed = discord.Embed()
+        embed.set_image(url = f"{birthday_gif}")
+        message = f":partying_face: It is <@{birth_today_list[0]}>'s birthday today and they are {age} years old! Happy birthday! :partying_face:"
+        await channel.send(message, embed = embed)
     
     if len(birth_today_list) == 2:
         birth_year1 = birthday_dict[birth_today_list[0]]['birth_date']
@@ -241,11 +294,10 @@ async def birthday_delete(message):
     del birthday_dict[f'{username}']
     await message.channel.send(f'Congratulations <@{username}>, you have been deleted!')
 
-checkTime()
-
 async def commands(message):
     # function that allows the user to see what commands are available for the bot to perform.
     username = message.author.id
     await message.channel.send(f'Hello <@{username}>, you can add your own birthday by typing !add, and check who has the next birthday by typing !next. You can also use !delete to remove yourself from the list. Hope this helps! :slight_smile:')
 
+checkTime()
 client.run(DISCORD_TOKEN)
