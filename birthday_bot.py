@@ -53,10 +53,6 @@ async def on_message(message):
     username = str(message.author.nick)
     channel = str(message.channel.name)
     user_message = str(message.content)
-    
-    # manually creating commands for users to interact with the bot
-    if message.author != client.user:
-        print(f'Message {user_message} by {username} on {channel} and name is {message.author.name}')
 
     if user_message.lower().startswith('!add'):
         await birthday_add(message)
