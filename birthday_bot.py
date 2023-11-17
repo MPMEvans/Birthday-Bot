@@ -34,14 +34,12 @@ if file_exists == True:
     with open(path, "r") as openfile:
         # reading from json file
         birthday_dict = json.load(openfile)
-        print(f"Birthday dict before converting to datetime object is {birthday_dict}")
 
         # converting the birth date string from the JSON file into a date time object
         for k, v in birthday_dict.items():
             birth_date_str = datetime.strptime(v['birth_date'], '%Y, %m, %d')
             v['birth_date'] = birth_date_str.date()
         
-        print(f"Birthday dict after converting to datetime object is {birthday_dict}")
 else: 
     # dictionary of users with birthdays registered in the discord server
     birthday_dict = {}
@@ -199,7 +197,6 @@ def checkTime():
     now = datetime.now()
 
     current_time = now.strftime("%H:%M:%S")
-    print("Current Time =", current_time)
 
     if (current_time == '07:00:00'):  # check if matches with the desired time
         # using datetime to get today's date
