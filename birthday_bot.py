@@ -39,7 +39,6 @@ if file_exists == True:
         for k, v in birthday_dict.items():
             birth_date_str = datetime.strptime(v['birth_date'], '%Y, %m, %d')
             v['birth_date'] = birth_date_str.date()
-        
 else: 
     # dictionary of users with birthdays registered in the discord server
     birthday_dict = {}
@@ -53,6 +52,10 @@ async def on_message(message):
     username = str(message.author.nick)
     channel = str(message.channel.name)
     user_message = str(message.content)
+    
+    # manually creating commands for users to interact with the bot
+    #if message.author != client.user:
+        #print(f'Message {user_message} by {username} on {channel} and name is {message.author.name}')
 
     if user_message.lower().startswith('!add'):
         await birthday_add(message)
@@ -193,6 +196,7 @@ def checkTime():
     now = datetime.now()
 
     current_time = now.strftime("%H:%M:%S")
+    #print("Current Time =", current_time)
 
     if (current_time == '07:00:00'):  # check if matches with the desired time
         # using datetime to get today's date
@@ -206,9 +210,11 @@ def checkTime():
             if this_year_bday == today:
                 birth_today_list.append(k)
 
-        # checking if it is someone's birthday and allowing a separate function to post a gif because asyncio is a dick
+        # checking if it is someone's birthday and allowing an async function to post a gif
         if len(birth_today_list) > 0:
             birthday_check = True
+        else:
+            birthday_check = False
 
     if birthday_check == True:
         # No need to create a new event loop to run the async birthday_gif function
@@ -252,6 +258,10 @@ async def birthday_gif():
             age = curr_year - birth_year.year
             await channel.send(f"It is <@{i}>'s birthday today and they are {age} years old!")
         await channel.send(f"{birthday_gif}")
+    
+    # Resetting everything after the gif has been sent
+    birthday_check = False
+    birth_today_list = []
 
 def get_random_birthday_gif():
     # Moving the changing of birthday check to false into this function to avoid the bot posting messages twice
