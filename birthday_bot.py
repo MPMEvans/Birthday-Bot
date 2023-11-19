@@ -141,7 +141,7 @@ async def birthday_next(message):
         # use datetime strftime to convert datetime object into readable text format of date. Format is the same as used in the birthday add function above with the link in the comment for reference.
         formatted_birthday_day = next_birthday.strftime('%d')
         formatted_birthday_month = datetime.strftime(next_birthday, '%B')
-        if formatted_birthday_day[0] == 0:
+        if '0' in formatted_birthday_day:
             formatted_birthday_day = formatted_birthday_day[-1]
         # create list incase multiple users have the same next birthday.
         next_user_birthday = []
@@ -188,27 +188,27 @@ async def birthday_next(message):
         await message.channel.send(f"There doesn't appear to be any users in the system please check that at least one user has added their birthday.")
 
 def checkTime():
-    # This function runs periodically every hour by changing the first number in the brackets
-    threading.Timer(3600, checkTime).start()
+    # This function runs periodically every 1 second
+    threading.Timer(1, checkTime).start()
 
     global birthday_check
     global birth_today_list
     birth_today_list = []
+    now = datetime.now()
 
-    #current_time = now.strftime("%H:%M:%S")
-    current_time = datetime.now()
+    current_time = now.strftime("%H:%M:%S")
     #print("Current Time =", current_time)
 
-    if (current_time.hour == 12):  # check if matches with the desired time
+    if (current_time == '07:00:00'):  # check if matches with the desired time
         # using datetime to get today's date
-        #today = datetime.today().date()
+        today = datetime.today().date()
         # parse year from the datetime date object.
-        curr_year = current_time.year
+        curr_year = today.year
 
         for k, v in birthday_dict.items():
             # replace the year part of the users birthday with the current year.
             this_year_bday = v['birth_date'].replace(year=curr_year)
-            if this_year_bday == current_time.date():
+            if this_year_bday == today:
                 birth_today_list.append(k)
 
         # checking if it is someone's birthday and allowing an async function to post a gif
