@@ -141,7 +141,7 @@ async def birthday_next(message):
         # use datetime strftime to convert datetime object into readable text format of date. Format is the same as used in the birthday add function above with the link in the comment for reference.
         formatted_birthday_day = next_birthday.strftime('%d')
         formatted_birthday_month = datetime.strftime(next_birthday, '%B')
-        if '0' in formatted_birthday_day:
+        if formatted_birthday_day[0] == 0:
             formatted_birthday_day = formatted_birthday_day[-1]
         # create list incase multiple users have the same next birthday.
         next_user_birthday = []
