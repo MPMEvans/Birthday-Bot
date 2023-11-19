@@ -193,6 +193,7 @@ def checkTime():
 
     global birthday_check
     global birth_today_list
+    birth_today_list = []
     now = datetime.now()
 
     current_time = now.strftime("%H:%M:%S")
